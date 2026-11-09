@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stundenplan &amp; Hausaufgaben</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f5f6f8;--card:#fff;--tx:#1c1f24;--mut:#6b7280;--bd:#e3e6ea;--ac:#3b82f6;--red:#dc2626;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121417;--card:#1d2126;--tx:#eceff3;--mut:#9aa3ae;--bd:#2c323a;--ac:#60a5fa;--red:#f87171;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121417;--card:#1d2126;--tx:#eceff3;--mut:#9aa3ae;--bd:#2c323a;--ac:#60a5fa;--red:#f87171;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,system-ui,"Segoe UI",sans-serif}
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 4px;max-width:560px;width:100%;margin:0 auto}
+header h1{font-size:20px;margin:0}
+header button{width:38px;height:38px;border-radius:50%;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:18px}
+.pager{flex:1;min-height:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;scrollbar-width:none;overscroll-behavior-x:contain}
+.pager::-webkit-scrollbar{display:none}
+.page{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always;overflow-y:auto;padding:8px 12px 24px}
+.in{max-width:560px;margin:0 auto}
+.wh{display:grid;grid-template-columns:44px repeat(5,1fr);gap:4px;text-align:center;margin-bottom:6px}
+.wh div{font-size:13px;color:var(--mut)}.wh b{display:block;font-size:20px;color:var(--tx)}
+.wh .today b{color:var(--ac)}
+.grid{display:grid;grid-template-columns:44px repeat(5,1fr);grid-template-rows:repeat(11,74px);gap:4px}
+.tm{font-size:11px;color:var(--mut);align-self:start;border-top:1px solid var(--bd);padding-top:2px}
+.bl{background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--c);border-radius:8px;padding:5px 6px;font-size:12px;line-height:1.25;overflow:hidden;cursor:pointer;min-width:0;position:relative}
+.bl b{display:block;font-size:13px}.bl.x{opacity:.5}.bl.x b{text-decoration:line-through}
+.bl span{color:var(--mut)}
+.bl .hw{display:block;margin-top:3px;color:var(--ac);font-weight:600;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.bl.has{border-color:var(--ac);border-left-color:var(--c)}
+.bl.dn .hw{text-decoration:line-through;color:var(--mut);font-weight:400}
+#ov,#ov2{position:fixed;inset:0;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:20}
+#ov.o,#ov2.o{opacity:1;pointer-events:auto}
+#sh,#sh2{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(100%);transition:transform .3s ease;max-width:560px;margin:0 auto}
+#ov.o #sh,#ov2.o #sh2{transform:none}
+#sh h2,#sh2 h2{margin:0 0 2px;font-size:18px}#sh .d{color:var(--mut);font-size:14px;margin-bottom:10px}
+textarea{width:100%;min-height:96px;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:12px;padding:10px;resize:vertical}
+.r{display:flex;gap:8px;margin-top:10px;align-items:center}
+.r label{flex:1;display:flex;gap:8px;align-items:center}
+.r input{width:22px;height:22px}
+.r button{font:inherit;border-radius:10px;padding:10px 14px;border:1px solid var(--bd);background:var(--bg);color:var(--tx)}
+.r .s{background:var(--ac);color:#fff;border:0;font-weight:600}
+.bar{display:flex;gap:8px;max-width:560px;margin:0 auto;padding:0 12px 6px;width:100%}
+.bar button{flex:1;font:inherit;font-size:14px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:12px;padding:8px}
+.bl.od{border-color:var(--red);border-left-color:var(--red)}.bl.od .hw{color:var(--red)}
+.bl.nw{border-color:#22c55e;box-shadow:0 0 0 2px #22c55e}
+.bl.kl{border-color:var(--red);border-left-color:var(--red);background:color-mix(in srgb,var(--red) 14%,var(--card));animation:gl 1.8s ease-in-out infinite}
+.bl.kl .hw{color:var(--red)}
+@keyframes gl{0%,100%{box-shadow:0 0 4px 0 var(--red)}50%{box-shadow:0 0 14px 3px var(--red)}}
+.th{max-width:100%;max-height:150px;border-radius:10px;margin-top:8px;display:block}
+.it{display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)}
+.it input{width:22px;height:22px;flex:none}.it .m{flex:1;min-width:0;word-break:break-word}
+.it .u{font-size:13px;color:var(--mut)}.it .u.late{color:var(--red);font-weight:600}
+#ls{max-height:55vh;overflow-y:auto}
+</style>
+</head>
+<body>
+<div class="app">
+<header><button id="pv" aria-label="Vorherige Woche">‹</button><h1 id="wk">Stundenplan</h1><button id="nx" aria-label="Nächste Woche">›</button></header>
+<div class="bar"><button id="op">📋 Offen</button></div>
+<div class="pager" id="pager"></div>
+</div>
+<div id="ov"><div id="sh">
+<h2 id="st"></h2><div class="d" id="sd"></div>
+<textarea id="tx" placeholder="Was habt ihr auf? z. B. Buch S. 42 Nr. 3–5"></textarea>
+<div class="r"><label><input type="checkbox" id="ts">🎯 Klassenarbeit / Test</label></div>
+<div class="r"><input type="file" id="fl" accept="image/*" hidden><button id="ph">📷 Foto</button><button id="ri" hidden>Foto entfernen</button></div>
+<img id="im" class="th" hidden alt="Foto">
+<div class="r"><label><input type="checkbox" id="dn">Erledigt</label><button id="rm">Löschen</button><button class="s" id="sv">Speichern</button></div>
+</div></div>
+<div id="ov2"><div id="sh2"><h2>Offen &amp; Termine</h2><div class="d">Hausaufgaben und Tests, nach Datum</div><div id="ls"></div></div></div>
+<script>
+var SUBJ={MA:["Mathe","#6366f1"],DE:["Deutsch","#b45f6b"],GEO:["Geografie","#65a30d"],GE:["Geschichte","#0284c7"],L:["Latein","#4d7c0f"],PH:["Physik","#0f766e"],SPTH:["Sporttheorie","#a16207"],SPO:["Sport","#d97706"],DS:["Darstellendes Spiel","#78716c"]};
+var DAYS=["So","Mo","Di","Mi","Do","Fr","Sa"];
+var T=["07:50","08:40","09:40","10:30","11:35","12:25","13:30","14:20","15:10","16:00","16:50"];
+// [Tag, Startstunde, Länge, Lehrer, Kurs, Raum, Fach, entfällt (nur diese Woche)]
+var L=[[1,3,1,"Hei","GEO_L1","218","GEO"],[2,1,2,"Hei","GEO_L1","218","GEO"],[2,3,2,"Schk","SPTH_G1","216","SPTH"],[2,5,2,"Syl","MA_L2","215","MA"],[2,7,1,"Dirk","PH_G2","340","PH"],[2,8,1,"Blü","GE_G3","220","GE"],[2,9,3,"Bött","DS_G1","001","DS"],
+[3,3,2,"Wend","L_G","216","L"],[3,5,2,"Hei","GEO_L1","218","GEO"],[3,7,1,"Syl","MA_L2","216","MA"],[3,8,1,"Weid","DE_G4","218","DE"],[3,9,1,"Schk","SPTH_G1","216","SPTH"],
+[4,3,2,"Blü","GE_G3","220","GE"],[4,6,1,"Wend","L_G","216","L"],[4,7,2,"Dirk","PH_G2","340","PH"],[4,9,2,"Frey","SPO","SpH3","SPO"],
+[5,1,2,"Syl","MA_L2","215","MA",1],[5,3,2,"Weid","DE_G4","218","DE"]];
+var HW={};try{HW=JSON.parse(localStorage.getItem("hw2")||"{}")}catch(e){HW={}}
+function save(){try{localStorage.setItem("hw2",JSON.stringify(HW));return true}catch(e){alert("Speicher voll – das Foto ist vermutlich zu groß.");return false}}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function esc(x){return String(x).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function kwOf(d){var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));t.setUTCDate(t.getUTCDate()+4-(t.getUTCDay()||7));return Math.ceil(((t-new Date(Date.UTC(t.getUTCFullYear(),0,1)))/864e5+1)/7)}
+var now=new Date(),dow=(now.getDay()+6)%7,mo=new Date(now);mo.setDate(now.getDate()-dow);
+var E=["08:35","09:25","10:25","11:15","12:20","13:10","14:15","15:05","15:55","16:45","17:35"];
+function dt(m,l,h){var d=new Date(m);d.setDate(m.getDate()+l[0]-1);var p=h.split(":");d.setHours(+p[0],+p[1],0,0);return d}
+var NW=5,pager=document.getElementById("pager");
+function monday(w){var m=new Date(mo);m.setDate(mo.getDate()+7*w);return m}
+function build(){
+  var out="";
+  for(var w=0;w<NW;w++){
+    var m=monday(w),h='<div></div>';
+    for(var d=0;d<5;d++){var x=new Date(m);x.setDate(m.getDate()+d);h+='<div class="'+(w===0&&d===dow?'today':'')+'">'+DAYS[d+1]+'<b>'+x.getDate()+'</b></div>'}
+    var g="";
+    T.forEach(function(t,i){g+='<div class="tm" style="grid-row:'+(i+1)+';grid-column:1">'+t+'</div>'});
+    L.forEach(function(l,i){
+      var s=SUBJ[l[6]],k=iso(m)+"|"+i,e=HW[k]||{},cx=l[7]&&w===0,st=dt(m,l,T[l[1]-1]),en=dt(m,l,E[l[1]+l[2]-2]),n=new Date();
+      var c="bl"+(cx?" x":"")+((e.t||e.img||e.test)?" has":"")+(e.done?" dn":"")+(e.t&&!e.done&&st<n?" od":"")+(!cx&&n>=st&&n<en?" nw":"")+(e.test&&en>=n?" kl":"");
+      var tag=(e.test?"🎯 ":"")+(e.img?"📷 ":"")+(e.t?"📝 "+esc(e.t):"");
+      g+='<div class="'+c+'" data-k="'+k+'" data-w="'+w+'" data-i="'+i+'" style="--c:'+s[1]+';grid-column:'+(l[0]+1)+';grid-row:'+l[1]+' / span '+l[2]+'"><b>'+l[3]+'</b>'+l[4]+'<br><span>'+l[5]+'</span>'+(tag?'<span class="hw">'+tag+'</span>':'')+'</div>'});
+    out+='<section class="page"><div class="in"><div class="wh">'+h+'</div><div class="grid">'+g+'</div></div></section>';
+  }
+  var y=pager.scrollLeft;pager.style.scrollBehavior="auto";pager.innerHTML=out;pager.scrollLeft=y;pager.style.scrollBehavior="";cnt();
+}
+function cur(){return Math.max(0,Math.min(NW-1,Math.round(pager.scrollLeft/pager.clientWidth)))}
+function lab(){var w=cur(),m=monday(w),f=new Date(m);f.setDate(m.getDate()+4);
+  document.getElementById("wk").textContent="KW "+kwOf(m)+" · "+m.getDate()+"."+(m.getMonth()+1)+". – "+f.getDate()+"."+(f.getMonth()+1)+"."}
+function go(w){pager.scrollTo({left:w*pager.clientWidth,behavior:"smooth"})}
+pager.addEventListener("scroll",lab);
+document.getElementById("pv").onclick=function(){go(Math.max(0,cur()-1))};
+document.getElementById("nx").onclick=function(){go(Math.min(NW-1,cur()+1))};
+var pic="",ts=document.getElementById("ts"),im=document.getElementById("im"),ri=document.getElementById("ri"),key=null,ov=document.getElementById("ov"),tx=document.getElementById("tx"),dn=document.getElementById("dn");
+pager.onclick=function(e){var b=e.target.closest(".bl");if(!b)return;
+  key=b.getAttribute("data-k");var l=L[+b.getAttribute("data-i")],w=+b.getAttribute("data-w");
+  var dd=new Date(monday(w));dd.setDate(dd.getDate()+l[0]-1);
+  document.getElementById("st").textContent=SUBJ[l[6]][0]+" ("+l[3]+")";
+  document.getElementById("sd").textContent=DAYS[l[0]]+", "+dd.getDate()+"."+(dd.getMonth()+1)+". · "+T[l[1]-1]+" Uhr · Raum "+l[5];
+  var e2=HW[key]||{t:"",done:false};tx.value=e2.t||"";dn.checked=!!e2.done;ts.checked=!!e2.test;showPic(e2.img||"");ov.className="o"};
+function close(){ov.className=""}
+ov.onclick=function(e){if(e.target===ov)close()};
+function showPic(p){pic=p;im.hidden=!p;ri.hidden=!p;if(p)im.src=p}
+document.getElementById("ph").onclick=function(){document.getElementById("fl").click()};
+ri.onclick=function(){showPic("")};
+document.getElementById("fl").onchange=function(e){var f=e.target.files[0];if(!f)return;var r=new FileReader();
+  r.onload=function(){var i=new Image();i.onload=function(){var k=Math.min(1,800/Math.max(i.width,i.height)),c=document.createElement("canvas");
+    c.width=i.width*k;c.height=i.height*k;c.getContext("2d").drawImage(i,0,0,c.width,c.height);showPic(c.toDataURL("image/jpeg",.6))};i.src=r.result};
+  r.readAsDataURL(f);e.target.value=""};
+document.getElementById("sv").onclick=function(){var v=tx.value.trim(),old=HW[key];
+  if(v||pic||ts.checked)HW[key]={t:v,done:dn.checked,test:ts.checked,img:pic};else delete HW[key];
+  if(!save()){if(old)HW[key]=old;else delete HW[key];return}build();close()};
+document.getElementById("rm").onclick=function(){delete HW[key];save();build();close()};
+function items(){var r=[],n=new Date(),sd=new Date(n.getFullYear(),n.getMonth(),n.getDate());
+  Object.keys(HW).forEach(function(k){var e=HW[k],p=k.split("|"),l=L[+p[1]],d=p[0].split("-"),m=new Date(+d[0],+d[1]-1,+d[2]),st=dt(m,l,T[l[1]-1]);
+    var open=e.t&&!e.done,test=e.test&&st>=sd;if(open||test)r.push({k:k,e:e,l:l,st:st,open:open,test:test})});
+  return r.sort(function(a,b){return a.st-b.st})}
+function cnt(){document.getElementById("op").textContent="📋 Offen ("+items().filter(function(x){return x.open}).length+")"}
+var ov2=document.getElementById("ov2");
+function days(st){var n=new Date(),a=new Date(n.getFullYear(),n.getMonth(),n.getDate()),b=new Date(st.getFullYear(),st.getMonth(),st.getDate());return Math.round((b-a)/864e5)}
+function list(){var h=items().map(function(x){var dd=days(x.st),late=x.open&&x.st<new Date();
+  var when=DAYS[x.l[0]]+", "+x.st.getDate()+"."+(x.st.getMonth()+1)+". · "+SUBJ[x.l[6]][0];
+  var cd=x.test?(dd<=0?"🎯 Test heute":dd===1?"🎯 Test morgen":"🎯 Test in "+dd+" Tagen"):(late?"Überfällig · ":"");
+  return '<div class="it">'+(x.open?'<input type="checkbox" data-k="'+x.k+'">':'<span>🎯</span>')+'<div class="m">'+(x.e.t?esc(x.e.t):"Klassenarbeit / Test")+'<div class="u'+(late?' late':'')+'">'+(x.test&&x.open?"":cd)+(x.test&&x.open?cd+" · ":"")+when+'</div></div></div>'}).join("");
+  document.getElementById("ls").innerHTML=h||'<div class="u" style="text-align:center;padding:18px 0">Alles erledigt 🎉</div>'}
+document.getElementById("op").onclick=function(){list();ov2.className="o"};
+ov2.onclick=function(e){if(e.target===ov2)ov2.className=""};
+document.getElementById("ls").onclick=function(e){var k=e.target.getAttribute("data-k");if(!k)return;HW[k].done=true;save();build();list()};
+setInterval(build,60000);
+build();lab();
+</script>
+</body>
+</html>
